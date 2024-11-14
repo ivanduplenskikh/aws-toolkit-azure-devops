@@ -69,6 +69,13 @@ function packagePlugin(options: CommandLineOptions) {
     // get required npm packages that will be copied
     installNodePackages(npmFolder)
 
+    const sourceRequireString = "require('./src/' + command);"
+    const fixedRequireString = "require('./src/' + command + '.js');"
+    const shelljsFilePath = path.resolve(process.cwd(), './node_modules/shelljs/shell.js')
+    const originContent = fs.readFileSync(shelljsFilePath, 'utf-8')
+
+    fs.writeFileSync(shelljsFilePath, originContent.replace(sourceRequireString, fixedRequireString))
+
     // clean, dedupe and pack each task as needed
     findMatchingFiles(folders.sourceTasks).forEach(function(taskName) {
         console.log('Processing task ' + taskName)
@@ -127,6 +134,7 @@ function packagePlugin(options: CommandLineOptions) {
         }
     })
 
+    fs.writeFileSync(shelljsFilePath, originContent.replace(fixedRequireString, sourceRequireString))
     console.log('Creating deployment vsix')
 
     const binName = os.platform() === 'win32' ? `tfx.cmd` : 'tfx'
